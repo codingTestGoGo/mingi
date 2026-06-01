@@ -1,55 +1,41 @@
-#include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm> 
+#include <algorithm>
+#include <iostream>
 
 using namespace std;
 
-bool visitCheck[8] = {false,};
-int finalCnt =0;
-int minFatigue = 1001;
-/*
-재귀를 멈추는 시기가 언제인가
-피로가 0이하일때?
-*/
-void FindRoute(int fatigue, int curIdx, int visitCnt, vector<vector<int>>& dungeons)
+int answer = -1;
+
+void DFS(vector<vector<int>>& dungeons, vector<bool>& isVisit, vector<int>& curRoute, int fatigue)
 {
-    if ( fatigue < minFatigue) 
+    
+    if (curRoute.empty() == false)
     {
-        return;
+        int curSize = curRoute.size();
+        answer = max(answer, curSize);
     }
     
-    for(int i = 0; i < dungeons.size() ; i++)
+    for(int i = 0 ; i <dungeons.size(); i++)
     {
-        if (visitCheck[i] == true) continue;
-        if (fatigue >= dungeons[i][0])
+        if (isVisit[i] == false && fatigue >= dungeons[i][0])
         {
-            visitCnt++;
-            finalCnt = max(finalCnt, visitCnt);
-            visitCheck[i] = true;
-            fatigue -= dungeons[i][1];
-            
-            //cout << "idx : " << i << " " << "visitCnt: " << visitCnt << endl;
-            FindRoute(fatigue, i, visitCnt, dungeons);
-            visitCheck[i] = false;
-            fatigue += dungeons[i][1];
-            visitCnt--;
-            
+            isVisit[i] = true;
+            curRoute.push_back(i);    
+            DFS(dungeons, isVisit, curRoute, fatigue - dungeons[i][1]);
+            isVisit[i] = false;
+            curRoute.pop_back();
         }
-       
     }
 }
 
 int solution(int k, vector<vector<int>> dungeons) {
-    int answer = -1;
+    vector<bool> isVisit(dungeons.size(), false);
+    vector<int> curRoute;
+    DFS(dungeons, isVisit, curRoute, k);
     
-    for(int i =0; i<dungeons.size(); i ++)
-    {
-        minFatigue = min(dungeons[i][0], minFatigue);
-    }
-    
-    FindRoute(k, 0, 0, dungeons);
-    
-    answer = finalCnt;
     return answer;
 }
+
+// 항상 최소 필요피로가 소모 피로보다 크같
+// 던전의 크기는 최대 5000  dfs?
