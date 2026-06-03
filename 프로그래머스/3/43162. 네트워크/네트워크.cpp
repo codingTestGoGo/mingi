@@ -18,7 +18,7 @@ void IntegrateNetwork(int overWriter, int overWrited, vector<int>& unionFind)
 }
 
 int solution(int n, vector<vector<int>> computers) {
-    int answer = 0;
+    int answer = 1;
     vector<int> unionFind (computers.size());
     
     for(int i = 0; i <unionFind.size(); i++)
@@ -44,13 +44,11 @@ int solution(int n, vector<vector<int>> computers) {
     }
     
     sort( unionFind.begin(), unionFind.end());
-    int curNet = -1;
     // 유니온의 값이 다르다면 네트워크의 개수를 추가한다.
-    for(int i = 0; i <unionFind.size() ; i ++)
+    for(int i = 1; i <unionFind.size() ; i ++)
     {
-        if( curNet != unionFind[i] )
+        if( unionFind[i-1] != unionFind[i] )
         {
-            curNet = unionFind[i];
             answer++;
         }
     }
