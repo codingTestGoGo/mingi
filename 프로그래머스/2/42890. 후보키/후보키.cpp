@@ -1,117 +1,97 @@
-#include <iostream>
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <iostream>
 #include <algorithm>
+#include <set>
 
 using namespace std;
+string columns = "012345678";
 
-unordered_map<string, int> map;
-unordered_map<string, int> uniqueMap;
-vector<string> allData;
-string column = "01234567";
-
-void DFS(int idx, string temp, int columnLen)
+void DFS(vector<string>& allColumn, int idx, int maxColumn, string curString)
 {
-    if(temp.length() > columnLen) return;
-    
-    map[temp]++;
-    for(int i = idx; i <columnLen; i++)
+    if(curString != "")
     {
-        DFS(i+1, temp+column[i], columnLen);
+        allColumn.push_back(curString);
+    }
+    
+    for(int i = idx; i < maxColumn ; i++)
+    {
+        DFS(allColumn, i+1, maxColumn, curString+columns[i]);
     }
 }
 
-bool AddToUnique(string strToAdd)
-{
-    for(auto str : uniqueMap)
+bool IsAnswer(vector<string>& answerCandidate, string strToAdd)
+{ 
+    // 정답에 들어잇는 모든 문자열 비교
+    for(auto answer: answerCandidate)
     {
-        // 중복된게 이미 map 에 있다면
-        int equal = 0;
-        for(int i = 0; i <str.first.length() ; i++)
+        int matchCnt = 0;
+        // 정답문자열의 문자 하나하나를 추가할 문자열과비교
+        // 추가할 문자열에 기존 정답의 문자열이 모두 포함되어잇으면 false 아니면 true
+        for(int i = 0; i <answer.length(); i++)
         {
-            for(int j = 0; j <strToAdd.length(); j++)
+            for(int j = 0; j<strToAdd.length(); j++)
             {
-                if(str.first[i] == strToAdd[j])
+                if(answer[i] == strToAdd[j])
                 {
-                    equal++;
+                    matchCnt++;
                     break;
                 }
             }
         }
-        if(equal == str.first.length()) return false;  
+        
+        if (matchCnt == answer.length())
+        {
+            return false;
+        }
     }
-    uniqueMap[strToAdd]++;
     return true;
 }
 
-bool Comp(string& a, string& b)
+bool Compare(string& a, string& b)
 {
     if(a.length() == b.length())
     {
         return a < b;
     }
     else
-    {
         return a.length() < b.length();
-    }
 }
 
 int solution(vector<vector<string>> relation) {
     int answer = 0;
-    cout << relation[0].size() <<"\n\n";
+    vector<string> allColumn;
+    vector<string> answerCandidate;
     
-    DFS(0, "", relation[0].size());         // 모든 컬럼조합 저장
+    DFS(allColumn, 0, relation[0].size(), "");
+    sort(allColumn.begin(), allColumn.end(), Compare);
     
-    for(auto columnData : map)
+    for(auto curColumns : allColumn)
     {
-        allData.push_back(columnData.first); 
+        set<string> tupleInCurColumn;
+        for(int i =0; i <relation.size(); i ++)
+        {
+            string curString;
+            // 선택된 열의 문자열을 조립
+            for(int j = 0; j <curColumns.length(); j++)
+            {
+                int idx = curColumns[j] - '0'; 
+                curString += relation[i][idx];
+            }
+            // set에 중복된 열이 잇으면 break;
+            if(tupleInCurColumn.find(curString) != tupleInCurColumn.end())
+                break;
+            else
+                tupleInCurColumn.insert(curString);
+        }
+        
+        // 튜플크기가 관계의 행과같으면 정답 중복 검사 실시
+        if( tupleInCurColumn.size() == relation.size() && IsAnswer(answerCandidate, curColumns))
+        {
+            answerCandidate.push_back(curColumns);
+        }
     }
     
-    sort(allData.begin(), allData.end(), Comp);
-    
-    for(auto curData : allData)
-    {
-        unordered_map<string, int> tempMap;
-        // 행 순환
-        for(int j = 0; j<relation.size(); j++)
-        {
-            string curTuple = "";
-            // 열들의 데이터 조합
-            for(int i = 0; i<curData.length(); i ++)
-            {
-                int curColumn = curData[i] - '0';
-                curTuple = curTuple + relation[j][curColumn];
-            }
-            
-            // 튜플값 넣어서 확인하기 
-            if(tempMap.find(curTuple) != tempMap.end()) // 이미 안에 튜플이 잇다? 중복이라면
-            {
-                tempMap.clear();
-                break;
-            }
-            else
-            {
-                tempMap.insert({curTuple, 0});
-            }
-        }
-        // 유일해
-        if(tempMap.empty()== false)
-        {
-            // 처음보는 유일임
-            if(AddToUnique(curData))
-            {
-                answer++;
-            }
-        }
-    }    
+    answer = answerCandidate.size();
     return answer;
 }
-
-
-/*
-column이 8개이므로 중복없이 모든컬럼 조합을 만든다.
-모든 조합에 대해서 맵에 넣고, 중복이 없으면 count
-다만,최소성 만족이 문젠데
-짧은것부터 map에 추가하고 추가하기 전에 map의 모든 요소들에 대해서 find연산을 통해서 중복이 잇는지검사하면 될것
-*/
