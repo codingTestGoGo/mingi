@@ -1,57 +1,84 @@
 #include <string>
 #include <vector>
-#include <algorithm>
+#include <set>
 #include <iostream>
-
 using namespace std;
 
-// union을 합친다.
-void IntegrateNetwork(int overWriter, int overWrited, vector<int>& unionFind)
+// 특정 인덱스의 부모를 
+int Find(vector<int>& parents, int curIdx)
 {
-    for(int i = 0;i <unionFind.size(); i++)
+    // 현재인덱스의부모가 자기 자신이라면 값을 리턴
+    if(parents[curIdx] == curIdx)
     {
-        if (unionFind[i] == overWrited)
-        {
-            unionFind[i] = overWriter;
-        }
+        return curIdx;
+    }
+    
+    // 아니라면 계속 추적해서 루트 인덱스를 찾는다
+    return Find(parents, parents[curIdx]);
+}
+
+void Union(vector<int>& parents, int a, int b)
+{
+    int rootA = Find(parents, a);
+    int rootB = Find(parents, b);
+    
+    cout << "rootA: " << rootA << "rootB: " << rootB <<endl;
+    
+    if (rootA != rootB)
+    {
+        parents[rootB] = rootA;
     }
 }
 
 int solution(int n, vector<vector<int>> computers) {
-    int answer = 1;
-    vector<int> unionFind (computers.size());
+    int answer = 0;
+    vector<int> parents(computers.size());
     
-    for(int i = 0; i <unionFind.size(); i++)
+    // 부모를 자기 자신으로 초기화
+    for(int i = 0; i < parents.size() ; i++) 
     {
-        unionFind[i] = i + 1;
+        parents[i] = i;
     }
     
-    for( int i = 0; i < computers.size(); i++)
+    for(int i = 0; i <computers.size(); i ++)
     {
-        for( int j = 0; j <computers[i].size(); j++)
+        for(int j = 0; j <computers[i].size(); j++)
         {
-            // 자신이 아닌 무언가와 연결되어 있을때
-            if (computers[i][j] == 1 && i != j && unionFind[i] != unionFind[j]) 
+            // 연결이 되어잇으면 통합 시도
+            if( i != j && computers[i][j] == 1)
             {
-                IntegrateNetwork(unionFind[i], unionFind[j], unionFind);
+                Union(parents, i, j);
+                
+                cout << "parents" <<endl;
+                for(int i = 0; i <parents.size(); i ++)
+                {
+                    cout << parents[i];
+                }
+                cout <<endl;
             }
         }
     }
     
-    for(int i = 0; i <unionFind.size(); i++)
+    cout << "parents" <<endl;
+    for(int i = 0; i <parents.size(); i ++)
     {
-        cout << unionFind[i];
+        cout << parents[i];
     }
+    cout << endl;
     
-    sort( unionFind.begin(), unionFind.end());
-    // 유니온의 값이 다르다면 네트워크의 개수를 추가한다.
-    for(int i = 1; i <unionFind.size() ; i ++)
+    set<int> nodes;
+    for(int i = 0; i < parents.size(); i++)
     {
-        if( unionFind[i-1] != unionFind[i] )
+        if(Find(parents, i) == i)
         {
-            answer++;
+            nodes.insert(i);
         }
     }
     
+    for(auto node : nodes)
+    {
+        cout << node; 
+    }
+    answer = nodes.size();
     return answer;
 }
