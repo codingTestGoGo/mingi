@@ -1,99 +1,100 @@
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <stack>
-#include <iostream>
+#include <algorithm>
 
 using namespace std;
 
-struct Node
-{
-    int index;
-    Node* next;
+struct Node {
+    int value;
     Node* prev;
+    Node* next;
 };
 
-void ExecuteCmd(vector<Node>& table, vector<string>& cmds, vector<bool>& canUse, int curPos)
+void ExecuteCmds(vector<Node>& table, vector<string>& cmds, vector<bool>& activated, int k )
 {
+    Node* curNode = &table[k];
     stack<int> deletedElements;
-    for(auto cmd : cmds) 
+    
+    for(auto cmd : cmds)
     {
-        if(cmd[0] == 'U')
+        if ( cmd[0] == 'U')
         {
-            int moveValue = stoi(cmd.substr(2));
-            Node* it = &table[curPos];
-            while(moveValue > 0)
+            int value = stoi(cmd.substr(1));
+            Node* nextNode = curNode; 
+            while(1)
             {
-                if(it->prev == nullptr) break;
-                it = it->prev;
-                moveValue --;
+                if (value == 0) break;
+                if (nextNode->prev != nullptr)
+                    nextNode = nextNode->prev;
+                value--;
             }
-            curPos = it->index;
+            curNode = nextNode;
         }
-        else if (cmd[0] == 'D')
+        else if ( cmd[0] == 'D')
         {
-            int moveValue = stoi(cmd.substr(2));
-            Node* it = &table[curPos];
-            while(moveValue > 0)
+            int value = stoi(cmd.substr(1));
+            Node* nextNode = curNode;
+            while(1)
             {
-                if(it->next == nullptr) break;
-                it = it->next;
-                moveValue --;
+                if (value == 0) break;
+                if ( nextNode->next != nullptr)
+                    nextNode = nextNode->next;
+                value--;
             }
-            curPos = it->index;
+            curNode = nextNode;
         }
-        else if (cmd[0] == 'C')
+        else if ( cmd[0] == 'C')
         {
-            deletedElements.push(curPos);
-            canUse[curPos] = false;
-            if (table[curPos].prev)
+            deletedElements.push(curNode->value);
+            activated[curNode->value] = false;
+            if ( curNode -> prev)
             {
-                table[curPos].prev->next = table[curPos].next;
+                curNode->prev->next = curNode->next;
             }
-            if (table[curPos].next)
+            if (curNode -> next)
             {
-                table[curPos].next->prev = table[curPos].prev;
+                curNode->next->prev = curNode->prev;
             }
             
-            if(table[curPos].next)
+            
+            if (curNode -> next)
             {
-                curPos = table[curPos].next->index;
+                curNode = curNode->next;
             }
             else
             {
-                curPos = table[curPos].prev->index;
+                curNode = curNode->prev;
             }
         }
-        else if (cmd[0] == 'Z')
+        else if ( cmd[0] == 'Z')
         {
-            int recoverPos =deletedElements.top();
+            int targetIdx = deletedElements.top();
+            Node* targetNode = &table[targetIdx];
+            activated[targetIdx] = true;
             deletedElements.pop();
-            canUse[recoverPos] = true;
-            if (table[recoverPos].next) 
+            if( targetNode->prev)
             {
-                table[recoverPos].next->prev = &table[recoverPos];
+                targetNode->prev->next = targetNode;
             }
-            if (table[recoverPos].prev)
+            if ( targetNode -> next)
             {
-                table[recoverPos].prev->next = &table[recoverPos];
+                targetNode->next->prev = targetNode;
             }
             
         }
-        else
-            continue;
+        else continue;
     }
+    
 }
 
 string solution(int n, int k, vector<string> cmd) {
     string answer = "";
     vector<Node> table(n);
-    vector<bool> canUse(n, true);
-    
-    for(int i = 0; i <n; i ++)
+    vector<bool> activated(n, true);
+    for(int i = 0; i <n; i++)
     {
-        table[i].index = i;
-        
-        if(i == 0)
+        if( i == 0)
         {
             table[i].prev = nullptr;
             table[i].next = &table[i+1];
@@ -108,21 +109,15 @@ string solution(int n, int k, vector<string> cmd) {
             table[i].prev = &table[i-1];
             table[i].next = &table[i+1];
         }
-        
-        //cout << table[i].index << " ";
+        table[i].value = i;
     }
-    ExecuteCmd(table, cmd, canUse, k);
     
-    for(int i = 0; i < n; i++ )
+    ExecuteCmds(table, cmd, activated, k);
+    
+    for(int i = 0; i < n; i ++)
     {
-        if(canUse[i]) 
-        {
-            answer += "O";
-        }
-        else
-        {
-            answer+= "X";
-        }
+        if(activated[i] == true) answer+= "O";
+        else answer += "X";
     }
     
     return answer;
