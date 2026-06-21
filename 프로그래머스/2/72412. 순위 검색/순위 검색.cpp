@@ -1,83 +1,56 @@
 #include <string>
 #include <vector>
-#include <algorithm>
+#include <sstream>
 #include <map>
+#include <algorithm>
+#include <iostream>
 
 using namespace std;
 
-void Parser(vector<string>& info, vector<vector<string>>& applicants, string delimeter)
-{
-    int start = 0;
-    int end;
-    for(int i = 0; i < info.size() ; i++)
-    {
-        start = 0;
-        info[i] += delimeter;
-        end = info[i].find(delimeter, start);
-        while( end != string::npos)
-        {
-            string parsed = info[i].substr(start, end - start);
-            if( parsed != "and" )
-                applicants[i].push_back(parsed);        // " "까지 끊기
-            start = end + delimeter.length();
-            end = info[i].find(delimeter, start);
-            
-        }
-    }
-}
-
 vector<int> solution(vector<string> info, vector<string> query) {
     vector<int> answer;
-    vector<vector<string>> applicants(info.size());
-    vector<vector<string>> parsedQuery(query.size());
-    map<string, vector<int>> appliDB;
+    map<string, vector<int>> applicantDB;
     
-    Parser(info, applicants, " ");
-    Parser(query, parsedQuery, " ");
-    
-    // map에 해당 지원자가 설정될 수 잇는 모든 쿼리를 key로 추가하고 value에 점수를 입력한다.
-    for(auto applicant : applicants) 
+    for(auto inf: info)
     {
-        appliDB[applicant[0] + applicant[1] + applicant[2] + applicant[3]].push_back(stoi(applicant[4]));
-        for(int i = 1;i <=4;i ++)
+        // stringstream으로 info 파싱
+        vector<string> parsedInfo(5);
+        istringstream iss(inf);
+        iss >> parsedInfo[0] >> parsedInfo[1] >> parsedInfo[2] >> parsedInfo[3] >> parsedInfo[4];
+        //applicantDB[parsedInfo[0] + parsedInfo[1] +parsedInfo[2] + parsedInfo[3]].push_back(stoi(parsedInfo[4]));
+        
+        // 비트마스킹으로 해당지원자를 포함할 수잇는 모든 쿼리등록
+        for(int mask = 0; mask<16 ; mask++)
         {
-            vector<bool> comb(4, false);
-            for(int k = 0 ; k <i ; k++)
-                comb[k] = true;
-            do
+            string temp = "";
+            
+            for(int k = 0; k<4; k++)
             {
-                string temp = "";
-                for(int j = 0; j < 4; j++ )
-                {
-                    if (comb[j]) temp+= "-";
-                    else temp += applicant[j];
-                }
-                appliDB[temp].push_back(stoi(applicant[4]));
-            } while(prev_permutation(comb.begin(), comb.end()));
+                temp += (mask & (1 << k)) ? "-" : parsedInfo[k];
+            }
+            //cout << temp << endl;
+            applicantDB[temp].push_back(stoi(parsedInfo[4]));
         }
     }
     
-    
-    for(auto& item: appliDB)
+    for(auto& applicant : applicantDB)
     {
-        sort(item.second.begin(), item.second.end());
+        sort(applicant.second.begin(), applicant.second.end());
     }
     
-    for(auto query: parsedQuery)
+    //쿼리 순회 및 이분탐색
+    for(auto quer : query)
     {
-        string key = query[0] + query[1] + query[2] + query[3];
-        vector<int>& scores = appliDB[key];
-        vector<int>::iterator iter = lower_bound(scores.begin(), scores.end(), stoi(query[4]));
+        vector<string> parsedQuery;
+        istringstream iss(quer);
+        string parsedPiece;
+        while(iss>>parsedPiece)
+            if(parsedPiece != "and")
+                parsedQuery.push_back(parsedPiece);
+        vector<int>& scores = applicantDB[parsedQuery[0] + parsedQuery[1] + parsedQuery[2] + parsedQuery[3]];
+        vector<int>::iterator iter = lower_bound(scores.begin(), scores.end(), stoi(parsedQuery[4]));
         answer.push_back(scores.end() - iter);
     }
     
     return answer;
 }
-
-/*
-info의 지원자를 전부 파싱하긴해야 한다.
-파싱한 지원자 각각에 대해서 지원자가 포함될 수있는 모든 쿼리를 맵에 넣어줘야한다.
-    맵에 들어간 지원자의 점수는 오름차순으로 정렬한다.
-쿼리를 순회하면서 각 쿼리를 key값으로 거기에 저장된 점수값을 이분탐색, 만족시키는 지원자의 수를 센다
-
-*/
