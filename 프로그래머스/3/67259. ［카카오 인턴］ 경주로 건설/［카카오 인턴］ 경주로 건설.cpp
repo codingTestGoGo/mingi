@@ -1,82 +1,84 @@
 #include <string>
 #include <vector>
 #include <queue>
-#include <algorithm>
 #include <iostream>
-#include <tuple>
-#define MAX 100000000
+
+#define MAX 1000000000
 
 using namespace std;
 
-int dx[4] = { 1, 0, -1, 0};
-int dy[4] = { 0, 1, 0, -1};
+// hor: 0, ver:1
+// 남동 북서 
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
 
-// dir = 1 세로, dir=2 가로
-void Dijkstra(vector<vector<int>>& board, vector<vector<vector<int>>>& dist, int n)
-{
-    queue<tuple<int, int, int>> q;
-    q.push({0, 0, 0});
-    dist[0][0][0] = 0;
+int solution(vector<vector<int>> board) {
+    int answer = 0;
+    int n = board.size();
+    queue<pair<int,int>> q;
+    vector<vector<vector<bool>>> isVisit(2, vector<vector<bool>>(n, vector<bool>(n, false)));
+    vector<vector<vector<int>>> cost(2, vector<vector<int>>(n, vector<int>(n, MAX)));
+    cost[0][0][0] = cost[1][0][0] = 0;
+    isVisit[0][0][0] = isVisit[1][0][0] = true;
+    q.push({0, 0});
     
     while(!q.empty())
     {
-        int curX = get<0>(q.front());
-        int curY = get<1>(q.front());
-        int dir = get<2>(q.front());
+        int curX = q.front().first;
+        int curY = q.front().second;
+        int horCost = cost[0][curX][curY];
+        int verCost = cost[1][curX][curY];
         q.pop();
         
-        for(int i = 0; i <4; i ++)
+        for(int i = 0 ; i <4; i++)
         {
             int nx = curX + dx[i];
             int ny = curY + dy[i];
-            int nDir, nDist;
             
-            if (i == 0 || i == 2) nDir = 1;
-            else nDir = 2;
+            if(nx <0 || ny<0 || nx >= n || ny >= n) continue; 
             
-            nDist = (nDir == dir) ? 100 : 600; 
-            
-            if(nx <0 || ny < 0 || nx >= n || ny >= n || board[nx][ny] == 1) continue;
-            
-            if(dir == 0)
+            if (board[nx][ny] != 1)
             {
-                q.push({nx, ny, nDir});
-                dist[nDir][nx][ny] = 100;
-            }
-            else if (dist[nDir][nx][ny] > dist[dir][curX][curY] + nDist)
-            {
-                q.push({nx, ny ,nDir});
-                dist[nDir][nx][ny] = dist[dir][curX][curY] + nDist;
+                // 위, 아래로 이동
+                if((i == 0 || i== 2) && min(horCost + 600, verCost+ 100) < cost[1][nx][ny])
+                {
+                    isVisit[1][nx][ny] = true;
+                    q.push({nx, ny});
+                    cost[1][nx][ny] = min(horCost + 600, verCost+ 100);
+                }
+                
+                // 좌우로 이동
+                else if ((i == 1 || i== 3) && min(horCost + 100, verCost+ 600) < cost[0][nx][ny])
+                {
+                    isVisit[0][nx][ny] = true;
+                    q.push({nx, ny});
+                    cost[0][nx][ny] = min(horCost + 100, verCost + 600);
+                }
             }
         }
     }
-}
-
-int solution(vector<vector<int>> board) {
-    int answer = 0; 
-    int n = board.size();
-    vector<vector<vector<int>>> dist(3,vector<vector<int>>(n, vector<int>(n, MAX)));
-    Dijkstra(board, dist, n);
     
-    
-    for(int i = 0; i <3; i++)
+    /*
+    for(int i = 0; i <n;i ++)
     {
-        for(int j = 0; j <n; j++)
+        for(int j = 0; j <n;j ++)
         {
-            for(int k = 0; k < n ; k ++)
-            {
-                cout << " ";
-                if(dist[i][j][k] == MAX) cout << 0;
-                else cout <<dist[i][j][k];
-            }
-            cout << endl;
+            if(min(cost[0][i][j], cost[1][i][j])  == MAX) 
+                cout << 0 << " ";
+            else
+                cout<< min(cost[0][i][j], cost[1][i][j]) << " ";
         }
-        cout <<endl;
+        cout << endl;
     }
+    */
     
-    
-    answer = min(dist[1][n-1][n-1], dist[2][n-1][n-1]);
-    
-    
+    answer = min(cost[0][n-1][n-1], cost[1][n-1][n-1]);
     return answer;
 }
+
+/*
+일직선으로 들어오는 값. 코너를 꺾어 들어오는 값 두개 값을 모두 가지고 있어야 하나?
+재방문은 고려할필요가없나 
+ => 맞음 (무조건 더 비싸질테니까) 다만, 가로, 세로 방향마다 방문을 세주긴해야함
+
+*/
