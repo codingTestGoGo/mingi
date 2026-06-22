@@ -5,18 +5,15 @@
 
 using namespace std;
 
-bool Compare(vector<int>& a, vector<int>& b)
+bool Compare(const vector<int>& a, const vector<int>& b)
 {
-    return a[2] < b[2];
+    return a[2] <= b[2];
 }
 
-int Find(vector<int>& parents, int target)
+int Find(vector<int>& parents, int curIdx)
 {
-    if (parents[target] == target) 
-    {
-        return target;
-    }
-    return Find(parents, parents[target]);
+    if (parents[curIdx] == curIdx) return curIdx;
+    return parents[curIdx] = Find(parents, parents[curIdx]);
 }
 
 bool Union(vector<int>& parents, int a, int b)
@@ -24,42 +21,37 @@ bool Union(vector<int>& parents, int a, int b)
     int rootA = Find(parents, a);
     int rootB = Find(parents, b);
     
-    cout << "root " << rootA << " rootB: "<< rootB<<endl;
-    
-    if (rootA == rootB) return false;
-    else
+    if (rootA != rootB)
     {
         parents[rootB] = rootA;
-        
-        for(int i = 0;i <20; i ++)
-        {
-            cout << parents[i];
-        }
-        cout <<endl;
-        
-        return true; 
+        return true;
     }
+    
+    return false;
 }
 
 int solution(int n, vector<vector<int>> costs) {
     int answer = 0;
     vector<int> parents(100);
-    for(int i = 0; i <n; i++)
-        parents[i] = i;
     
     sort(costs.begin(), costs.end(), Compare);
     
-    for(auto cost : costs)
+    for(int i = 0; i <parents.size(); i ++)
     {
-        int start = cost[0];
-        int end = cost[1];
-        int dist = cost[2];
+        parents[i] = i;
+    }
         
-        if( Union(parents, start, end))
+    for(auto cost: costs)
+    {
+        int a = cost[0];
+        int b = cost[1];
+        if(Union(parents, a, b) == true)
         {
-            answer += dist;
+            answer+= cost[2];
         }
     }
-    
     return answer;
 }
+
+// 코스트 기준으로 정렬해서 작은 코스트부터 더하고 방문체크
+// 방문 체크만해서는 모든 섬을 연결할 수없다  2개씩 페어로 연결되거나 하는경우가 있음.. unionfind 를 사용해야한다
