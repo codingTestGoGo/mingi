@@ -1,52 +1,47 @@
 #include <string>
 #include <vector>
-#include <iostream>
 
 using namespace std;
 
 int solution(int n, vector<vector<int>> results) {
     int answer = 0;
+    vector<vector<bool>> isConnected (n , vector<bool>(n, false));
     
-    vector<vector<bool>> reachability(101, vector<bool>(101, false));
-    
-    for(int i = 0; i <results.size(); i++)
+    for(auto result : results)
     {
-        int start = results[i][0];
-        int end = results[i][1];
-        reachability[start][end] = true;
+        int start = result[0] - 1;
+        int end = result[1] - 1;
+        isConnected [start][end] = true;
     }
     
-    // 플로이드로 거쳐서 도달할 수 잇는 노드 true 체크하기
-    for(int k = 1; k <=n; k++)
+    for(int k = 0; k <n; k++) 
     {
-        for (int i = 1; i <=n; i++)
+        for(int i = 0; i < n; i ++)
         {
-            for(int j = 1; j<= n; j++)
+            for(int j = 0; j <n; j ++)
             {
-                if(reachability[i][k] && reachability[k][j])
-                    reachability[i][j] = true;
+                if (i == j ) continue;
+                else if (isConnected[i][k] && isConnected[k][j])
+                    isConnected[i][j] = true;
             }
         }
     }
     
-    for (int i = 1; i<= n; i++)
+    for(int i = 0; i <n; i ++)
     {
-        for(int j = 1; j<=n ; j++)
+        int cnt = 0;
+        for(int j = 0; j <n; j++)
         {
-            cout<<reachability[i][j];
+            if (i == j) continue;
+            else if (isConnected[i][j] || isConnected[j][i])
+                cnt++;
         }
-        cout << endl;
-    }
-    
-    for(int i = 1; i <=n; i++)
-    {
-        int reachCnt = 0;
-        for(int j = 1; j <=n; j++)
-        {
-            if (reachability[i][j] || reachability[j][i]) reachCnt++;
-        }
-        if (reachCnt == n-1) answer++;
+        if (cnt == n-1)
+            answer ++;
     }
     
     return answer;
 }
+
+// 특정 선수에 대해서 순위를 매기려면 다른 모든선수와의 승패결과를 알아야한다.
+// 해당 선수와 연결된 엣지의 개수가 n-1개여야 함을 의미한다.
