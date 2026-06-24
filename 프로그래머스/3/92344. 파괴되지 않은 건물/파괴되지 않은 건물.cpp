@@ -14,7 +14,7 @@ int solution(vector<vector<int>> board, vector<vector<int>> skill) {
     int answer = 0;
     int n = board.size();
     int m = board[0].size();
-    vector<vector<int>> accumulatedSum (n, vector<int>(m, 0));
+    vector<vector<int>> accumulatedSum (n+1, vector<int>(m+1, 0));
     
     for(int i = 0; i <skill.size(); i++)
     {
@@ -24,17 +24,13 @@ int solution(vector<vector<int>> board, vector<vector<int>> skill) {
         int x2 = skill[i][3];
         int y2 = skill[i][4];
         int value = skill[i][5];
+        
         if(attackType == 1) value = -value;
         
         accumulatedSum[x1][y1] += value;
-        if (x2 == n-1 && y2 == m-1)
-            continue;
-        if (y2 < m-1)
-            accumulatedSum[x1][y2+1] -= value;
-        if (x2 < n-1)
-            accumulatedSum[x2+1][y1] -= value;
-        if (x2 < n-1 && y2 < m-1)
-            accumulatedSum[x2+1][y2+1] += value;
+        accumulatedSum[x1][y2+1] -= value;
+        accumulatedSum[x2+1][y1] -= value;
+        accumulatedSum[x2+1][y2+1] += value;
     }
     
     // 가로 순회
